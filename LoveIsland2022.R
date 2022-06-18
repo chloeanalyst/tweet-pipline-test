@@ -1,11 +1,14 @@
-library(rtweet)
-library(tidyverse)
-library(tidytext)
-library(textdata)
-library(lubridate)
-library(RSQLite)
-library(googlesheets4)
+require(rtweet)
+require(tidyverse)
+require(tidytext)
+require(textdata)
+require(lubridate)
+require(RSQLite)
+require(googlesheets4)
+require(DBI)
+require(RPostgres)
 
+setwd("/Users/chloe/Documents/GitHub/tweet-pipline-test")
 
 analyse()
 run_and_analyse()
@@ -27,12 +30,18 @@ run_and_analyse()
 
 run_and_analyse <- function(){
 run()
-sys.sleep(300)
+Sys.sleep(30)
 analyse()
 }
 run <- function() {
   
-  conn <- dbConnect(RSQLite::SQLite(), "LoveIslandIsBack.db")
+con <- dbConnect(RPostgres::Postgres(),dbname = 'postgres', 
+                   host = 'db.oggqwqgajtiglcpuncqo.supabase.co', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+                   port = 6543, # or any other port specified by your DBA
+                   user = 'postgres',
+                   password = 'XwW2Gd7Us63sbe9')  
+  
+#  conn <- dbConnect(RSQLite::SQLite(), "LoveIslandIsBack.db")
   
   # dbExecute(conn, "CREATE TABLE LoveIslandTweets(
   #                                          created_at TEXT,
@@ -56,19 +65,30 @@ run <- function() {
   tweets$created_at <- as.character(as.Date(tweets$created_at))
   tweets <- as.data.frame(tweets)
   
+  dbWriteTable(con, "LoveIslandTweets", tweets, append = T)  
   
-  dbWriteTable(conn, "LoveIslandTweets", tweets, append = T)
+  dbDisconnect(con)
   
-  dbDisconnect(conn)
+#  dbWriteTable(conn, "LoveIslandTweets", tweets, append = T)
+  
+#  dbDisconnect(conn)
   
 }
 analyse <- function(){
 
 
-conn <- dbConnect(RSQLite::SQLite(), "LoveIslandIsBack.db")
+#conn <- dbConnect(RSQLite::SQLite(), "LoveIslandIsBack.db")
 
+con <- dbConnect(RPostgres::Postgres(),dbname = 'postgres', 
+                   host = 'db.oggqwqgajtiglcpuncqo.supabase.co', # i.e. 'ec2-54-83-201-96.compute-1.amazonaws.com'
+                   port = 6543, # or any other port specified by your DBA
+                   user = 'postgres',
+                   password = 'XwW2Gd7Us63sbe9')    
+  
 
-table <- dbReadTable(conn, "LoveIslandTweets")
+#table <- dbReadTable(conn, "LoveIslandTweets")
+
+table <- dbReadTable(con, "LoveIslandTweets")
 
 table <- table[!duplicated(table), ] #Remove any duplicate rows
 
@@ -86,6 +106,10 @@ contestants <- c('Ekin-Su'
                  ,'Indiyah'
                  ,'Dami'
                  ,'Paige'
+                 ,'Jacques'
+                 ,'Jay'
+                 ,'Remi'
+                 ,'Danica'
               
                  )
 
@@ -217,10 +241,15 @@ contestant_word_clouds <- get_word_clouds()
 output$created_at <- as.character(output$created_at)
 daily_overall$created_at <- as.character(daily_overall$created_at)
  
-dbWriteTable(conn, "Daily", daily_overall, overwrite = T)
-dbWriteTable(conn, "Contestant", output, overwrite = T)
+#dbWriteTable(conn, "Daily", daily_overall, overwrite = T)
+#dbWriteTable(conn, "Contestant", output, overwrite = T)
 
-dbDisconnect(conn)
+
+dbWriteTable(con, "Daily", daily_overall, overwrite = T)
+dbWriteTable(con, "Contestant", output, overwrite = T)
+
+#dbDisconnect(conn)
+dbDisconnect(con)
 
 
 write_sheet(output, ss = "https://docs.google.com/spreadsheets/d/1GeTY81rBFv3fm95WMClPm_zDjAa88ykNyPkiX8NkTyU/edit#gid=0"
