@@ -17,7 +17,7 @@ analyse()
 run_and_analyse()
 
 
-contestants <- c('Will'
+contestants <- c( 'Will'
                  ,'Tanyel'
                  ,'Tanya'
                  ,'Shaq'
@@ -29,6 +29,7 @@ contestants <- c('Will'
                  ,'Anna-May'
                  ,'Maya'
                  ,'Iain'
+                 ,'Tom'
                  )
 
 
